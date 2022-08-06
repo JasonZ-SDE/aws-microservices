@@ -1,3 +1,4 @@
+"use strict";
 import {
   DeleteItemCommand,
   GetItemCommand,
@@ -17,7 +18,7 @@ exports.handler = async function (event) {
     switch (event.httpMethod) {
       case "GET":
         if (event.queryStringParameters != null) {
-          body = await getProductByCategory(event);
+          body = await getProductsByCategory(event);
         } else if (event.pathParameters != null) {
           body = await getProduct(event.pathParameters.id);
         } else {
@@ -68,7 +69,7 @@ const getProduct = async (productId) => {
 
     const { Item } = await ddbclient.send(new GetItemCommand(params));
     console.log(Item);
-    return Item ? unmarshall(item) : {};
+    return Item ? unmarshall(Item) : {};
   } catch (e) {
     console.log(e);
     throw e;
@@ -94,7 +95,7 @@ const getAllProducts = async () => {
 const createProduct = async (event) => {
   console.log(`createProduct function. event "${event}"`);
   try {
-    const productRequest = JSON.parse(event);
+    const productRequest = JSON.parse(event.body);
     const productId = uuidv4();
     productRequest.id = productId;
     const params = {
