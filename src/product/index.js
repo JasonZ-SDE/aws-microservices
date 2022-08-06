@@ -64,7 +64,7 @@ const getProduct = async (productId) => {
   try {
     const params = {
       TableName: process.env.DYNAMODB_TABLE_NAME,
-      key: marshall({ id: productId }),
+      Key: marshall({ id: productId }),
     };
 
     const { Item } = await ddbclient.send(new GetItemCommand(params));
@@ -113,12 +113,12 @@ const createProduct = async (event) => {
 };
 
 const deleteProduct = async (productId) => {
-  console.log(`deleteProduct function. productId: "${prodcutId}"`);
+  console.log(`deleteProduct function. productId: "${productId}"`);
 
   try {
     const params = {
       TableName: process.env.DYNAMODB_TABLE_NAME,
-      key: marshall({ id: productId }),
+      Key: marshall({ id: productId }),
     };
 
     const deleteResult = await ddbclient.send(new DeleteItemCommand(params));
