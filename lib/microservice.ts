@@ -1,3 +1,4 @@
+import { ITaggable } from "aws-cdk-lib";
 import { ITable } from "aws-cdk-lib/aws-dynamodb";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import {
@@ -9,32 +10,60 @@ import { join } from "path";
 
 interface SwnMicroservicesProps {
   productTable: ITable;
+  basketTable: ITable;
 }
 
 export class SwnMicroservices extends Construct {
   public readonly productMicroservice: NodejsFunction;
+  public readonly basketMicroservice: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: SwnMicroservicesProps) {
     super(scope, id);
 
-    // Product microservices lambda function
-    const nodejsFunctionProps: NodejsFunctionProps = {
+    this.productMicroservice = this.createProductFunction(props.productTable);
+    this.basketMicroservice = this.createBasketFunction(props.basketTable);
+  }
+
+  // Product microservices lambda function
+  private createProductFunction(productTable: ITable): NodejsFunction {
+    const productFunctionProps: NodejsFunctionProps = {
       bundling: {
         externalModules: ["aws-sdk"],
       },
       environment: {
         PRIMARY_KEY: "id",
-        DYNAMODB_TABLE_NAME: props.productTable.tableName,
+        DYNAMODB_TABLE_NAME: productTable.tableName,
       },
       runtime: Runtime.NODEJS_16_X,
     };
 
     const productFunction = new NodejsFunction(this, "productLambdaFunction", {
       entry: join(__dirname, `/../src/product/index.js`),
-      ...nodejsFunctionProps,
+      ...productFunctionProps,
     });
 
-    props.productTable.grantReadWriteData(productFunction);
-    this.productMicroservice = productFunction;
+    productTable.grantReadWriteData(productFunction);
+    return productFunction;
+  }
+
+  private createBasketFunction(basketTable: ITable): NodejsFunction {
+    const basketFunctionProps: NodejsFunctionProps = {
+      bundling: {
+        externalModules: ["aws-sdk"],
+      },
+      environment: {
+        PRIMARY_KEY: "userName",
+        DYNAMODB_TABLE_NAME: basketTable.tableName,
+      },
+      runtime: Runtime.NODEJS_16_X,
+    };
+
+    const basketFunction = new NodejsFunction(this, "basketLambdaFunction", {
+      entry: join(__dirname, `/../src/basket/index.js`),
+      ...basketFunctionProps,
+    });
+
+    basketTable.grantReadWriteData(basketFunction);
+    return basketFunction;
   }
 }
